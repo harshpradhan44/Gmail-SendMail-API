@@ -1,39 +1,65 @@
 const nodemailer = require("nodemailer");
+const fs = require('fs')
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
+const credential = require('./credentials.json');
+const { callbackPromise } = require("nodemailer/lib/shared");
 
 
-const oauth2Client = new OAuth2(
-    "311677438815-s5qrkc2d2j6p9gi4siql76hrh8qiq0tf.apps.googleusercontent.com",
-    "oXDKQ6mpzWzxV1PeQRdy8Yh-", // Client Secret
-    "http://localhost:8000/callback" // Redirect URL
-);
+exports.sendEmail = function(t,fr,sub,mbody) {
 
-oauth2Client.setCredentials({
-    refresh_token: "1//0gQ7aHjpSCGcRCgYIARAAGBASNwF-L9IrpzDQFXkeUDDFqRGKOBCgFgj4sz_croGH3DxNVUCsXasMQ4h9ZGYWyj01RgYacnuKmaE"
-});
+    //let refresh_token 
+    const from = fr;
+    const to = t;
+    const subject = sub;
+    const body = mbody;
+    const clientId = credential.web.client_id;
+    const clientSecret = credential.web.client_secret
+    const redirectURL = credential.web.redirect_uris[0]
 
-const accessToken = oauth2Client.getAccessToken()
-const smtpTransport = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-         type: "OAuth2",
-         user: "harsh.pradhan44@gmail.com", 
-         clientId: "311677438815-s5qrkc2d2j6p9gi4siql76hrh8qiq0tf.apps.googleusercontent.com",
-         clientSecret: "oXDKQ6mpzWzxV1PeQRdy8Yh-",
-         refreshToken: "1//0gQ7aHjpSCGcRCgYIARAAGBASNwF-L9IrpzDQFXkeUDDFqRGKOBCgFgj4sz_croGH3DxNVUCsXasMQ4h9ZGYWyj01RgYacnuKmaE",
-         accessToken: accessToken
-    }});
+    
+    fs.readFile('token.json', (err, token,next) => {
+        if (err) console.log(err)
+        else{
+         var access = JSON.parse(token);
+         const refresh_token = access.refresh_token;
 
-    const mailOptions = {
-        from: "harsh.pradhan44@gmail.com",
-        to: "harsh.pradhan44@gmail.com",
-        subject: "Node.js Email with Secure OAuth",
-        generateTextFromHTML: true,
-        html: "<b>test</b>"
-   };
+         
+        const oauth2Client = new OAuth2(
+            clientId,      // Client ID
+            clientSecret, // Client Secret
+            redirectURL // Redirect URL
+        );
 
-   smtpTransport.sendMail(mailOptions, (error, response) => {
-    error ? console.log(error) : console.log(response);
-    smtpTransport.close();
-});
+        oauth2Client.setCredentials({
+            refresh_token: refresh_token
+        });
+
+        const accessToken = oauth2Client.getAccessToken()
+        const smtpTransport = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                type: "OAuth2",
+                user: from, 
+                clientId: clientId,
+                clientSecret: clientSecret,
+                refreshToken: refresh_token,
+                accessToken: accessToken
+            }});
+
+            const mailOptions = {
+                from: from,
+                to: to,
+                subject: subject,
+                text : body
+        };
+
+        smtpTransport.sendMail(mailOptions, (error, response) => {
+            error ? console.log(error) : console.log(response);
+            smtpTransport.close();
+        });
+        
+        }
+    })
+        
+}
