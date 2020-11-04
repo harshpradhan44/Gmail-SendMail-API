@@ -1,6 +1,6 @@
 # Gmail-SendMail-API
 
-1. To generate credentials.js, go to this link -> https://developers.google.com/gmail/api/quickstart/nodejs 
+1. To generate credentials.json, go to this link -> https://developers.google.com/gmail/api/quickstart/nodejs 
 2. Install all the dependencies.
 3. run node exp.js
 4. make a POST request in the following format (URLencoded):
